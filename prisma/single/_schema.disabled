@@ -1,0 +1,309 @@
+// Prisma Db Config 
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// --- Enums ---
+
+enum Status {
+    ACTIVE
+    BANNED
+}
+
+enum Role {
+    SUPER
+    ADMIN
+    USER
+}
+
+enum Gender {
+    MALE
+    FEMALE
+    OTHER
+    UNKNOWN
+}
+
+enum MembershipStatus {
+    ACTIVE
+    EXPIRED
+}
+
+enum ScheduleStatus {
+    SCHEDULED
+    COMPLETED
+    CANCELLED
+}
+
+enum VipType {
+    online
+    offline
+}
+
+// --- Models ---
+
+// -----------------------------------------
+// administrator
+// ------------------------------------------
+
+model Admin {
+    id         Int      @id @default(autoincrement())
+    name       String?
+    email      String   @unique
+    username   String   @unique
+    password   String
+    avatar     String?
+    permission String[]
+    status     Status   @default(ACTIVE)
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
+    role       Role
+
+    // Relations
+    students         Student[]         @relation("StudentCreator")
+    teachers         Teacher[]         @relation("TeacherCreator")
+    membership_order MembershipOrder[] @relation("AdminToMembershipOrder")
+    lecture_order    LectureOrder[]    @relation("AdminToLectureOrder")
+    class_schedules  ClassSchedule[]   @relation("AdminToClassSchedule")
+}
+
+// -----------------------------------------
+// student
+// ------------------------------------------
+
+model Student {
+    id             Int       @id @default(autoincrement())
+    name           String
+    student_number String    @unique @db.VarChar(255)
+    birth_date     DateTime? @db.Date
+    gender         Gender    @default(UNKNOWN)
+    phone_number   String?
+    email          String?
+    status         Status    @default(ACTIVE)
+    contact        String?
+    des            String?
+    created_at     DateTime  @default(now())
+    updated_at     DateTime  @updatedAt
+
+    // Creator Relation
+    creator_id Int?
+    creator    Admin? @relation("StudentCreator", fields: [creator_id], references: [id])
+
+    // Business Relations
+    membership_order MembershipOrder[] @relation("StudentToMembershipOrder")
+    lecture_order    LectureOrder[]    @relation("StudentToLectureOrder")
+    membership       Membership?
+    student_lectures StudentLecture[]
+
+    class_id      Int?
+    class         Class?        @relation(fields: [class_id], references: [id], onDelete: SetNull)
+    vip_schedules VipSchedule[]
+}
+
+// -----------------------------------------
+// teacher
+// ------------------------------------------
+
+model Teacher {
+    id           Int       @id @default(autoincrement())
+    name         String
+    color        String?
+    birth_date   DateTime? @db.Date
+    gender       Gender    @default(UNKNOWN)
+    phone_number String?
+    email        String?
+    status       Status    @default(ACTIVE)
+    contact      String?
+    des          String?
+    created_at   DateTime  @default(now())
+    updated_at   DateTime  @updatedAt
+
+    // Creator Relation
+    creator_id Int?
+    creator    Admin? @relation("TeacherCreator", fields: [creator_id], references: [id], onDelete: SetNull)
+
+    // Business Relations
+    managed_classes         Class[]         @relation("ClassTeacher")
+    class_lectures_to_teach ClassSchedule[] @relation("ClassLectureTeacher")
+    vip_schedules           VipSchedule[]
+}
+
+// -----------------------------------------
+// Lecture
+// ------------------------------------------
+
+model Lecture {
+    id          Int      @id @default(autoincrement())
+    course_name String
+    type        String
+    created_at  DateTime @default(now())
+    updated_at  DateTime @updatedAt
+
+    student_lectures StudentLecture[]
+    class_schedules  ClassSchedule[]
+    vip_schedules    VipSchedule[]
+}
+
+// -----------------------------------------
+// Membership
+// ------------------------------------------
+
+model Membership {
+    id                Int              @id @default(autoincrement())
+    membership_expiry DateTime
+    start_time        DateTime
+    status            MembershipStatus
+    created_at        DateTime         @default(now())
+    updated_at        DateTime         @updatedAt
+
+    student_id Int     @unique
+    student    Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------
+// Membership Order Record
+// ------------------------------------------
+
+model MembershipOrder {
+    id           BigInt    @id @default(autoincrement())
+    months_added Int       @default(0)
+    old_expiry   DateTime?
+    new_expiry   DateTime
+    note         String?
+    created_at   DateTime  @default(now())
+    updated_at   DateTime  @updatedAt
+
+    student_id     Int?
+    student        Student? @relation("StudentToMembershipOrder", fields: [student_id], references: [id], onDelete: SetNull)
+    student_record Json
+
+    creator_id     Int?
+    creator        Admin? @relation("AdminToMembershipOrder", fields: [creator_id], references: [id], onDelete: SetNull)
+    creator_record Json
+}
+
+// -----------------------------------------
+// Lecture Order Record
+// ------------------------------------------
+
+model LectureOrder {
+    id           BigInt   @id @default(autoincrement())
+    months_added Int      @default(0)
+    note         String?
+    created_at   DateTime @default(now())
+    updated_at   DateTime @updatedAt
+
+    student_id     Int?
+    student        Student? @relation("StudentToLectureOrder", fields: [student_id], references: [id], onDelete: SetNull)
+    student_record Json
+
+    creator_id     Int?
+    creator        Admin? @relation("AdminToLectureOrder", fields: [creator_id], references: [id], onDelete: SetNull)
+    creator_record Json
+
+    lecture_record Json
+}
+
+// -----------------------------------------
+// Student Lecture Relationship (M:N)
+// ------------------------------------------
+
+model StudentLecture {
+    id         Int     @id @default(autoincrement())
+    student_id Int
+    student    Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+    lecture_id Int
+    lecture    Lecture @relation(fields: [lecture_id], references: [id], onDelete: Cascade)
+
+    total_lessons    Int @default(0)
+    remained_lessons Int @default(0)
+
+    status     Status   @default(ACTIVE)
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
+
+    @@unique([student_id, lecture_id])
+}
+
+// -----------------------------------------
+// Class
+// ------------------------------------------
+
+model Class {
+    id          Int             @id @default(autoincrement())
+    name        String          @unique
+    description String?
+    teacher_id  Int?
+    teacher     Teacher?        @relation("ClassTeacher", fields: [teacher_id], references: [id])
+    students    Student[]
+    created_at  DateTime        @default(now())
+    updated_at  DateTime        @updatedAt
+    schedules   ClassSchedule[]
+}
+
+// -----------------------------------------
+// Class Schedule
+// ------------------------------------------
+
+model ClassSchedule {
+    id            Int            @id @default(autoincrement())
+    class_id      Int
+    class         Class          @relation(fields: [class_id], references: [id], onDelete: Cascade)
+    lecture_id    Int?
+    lecture       Lecture?       @relation(fields: [lecture_id], references: [id], onDelete: Cascade)
+    is_deductible Boolean        @default(true)
+    deduct_amount Float          @default(1.0)
+    teacher_id    Int?
+    teacher       Teacher?       @relation("ClassLectureTeacher", fields: [teacher_id], references: [id], onDelete: SetNull)
+    date          DateTime       @db.Date
+    begin         String         @db.VarChar(255)
+    end           String         @db.VarChar(255)
+    classroom     String?
+    status        ScheduleStatus @default(SCHEDULED)
+    created_at    DateTime       @default(now())
+    updated_at    DateTime       @updatedAt
+
+    admin_id Int?
+    admin    Admin? @relation("AdminToClassSchedule", fields: [admin_id], references: [id])
+}
+
+// -----------------------------------------
+// VIP Schedule
+// ------------------------------------------
+
+model VipSchedule {
+    id    Int       @id @default(autoincrement())
+    date  DateTime? @db.Date
+    begin String?   @db.VarChar(255)
+    end   String?   @db.VarChar(255)
+
+    student_id Int?
+    student    Student? @relation(fields: [student_id], references: [id])
+
+    lecture_id Int?
+    lecture    Lecture? @relation(fields: [lecture_id], references: [id])
+
+    teacher_id Int?
+    teacher    Teacher? @relation(fields: [teacher_id], references: [id])
+
+    subtitle  String?        @db.VarChar(255)
+    status    ScheduleStatus @default(SCHEDULED)
+    type      VipType?       @default(offline)
+    classroom String?        @db.VarChar(255)
+
+    count     Float   @default(0)
+    count_add String? @db.VarChar(255)
+
+    time_zone   DateTime
+    online_type String?  @db.VarChar(255)
+    content     String?  @db.VarChar(255)
+
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
+}

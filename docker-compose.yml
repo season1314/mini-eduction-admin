@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hqs131421
+      POSTGRES_DB: mini_education_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data 
+
+  pgbouncer:
+    image: edoburu/pgbouncer
+    container_name: pgbouncer_proxy
+    environment:
+      - DB_USER=postgres
+      - DB_PASS=hqs131421
+      - DB_HOST=postgres_db
+      - DB_PORT=5432
+      - DB_NAME=mini_education_db
+      - LISTEN_PORT=6432
+      - POOL_MODE=transaction
+      - AUTH_TYPE=scram-sha-256
+      - IGNORE_STARTUP_PARAMETERS=extra_float_digits
+    ports:
+      - "6432:6432"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
