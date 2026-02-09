@@ -31,6 +31,9 @@ class Validator {
     }
 
     length(min: number = 0, max: number = 0) {
+        if (this.value === undefined || this.value === null) {
+            return this;
+        }
         if (min && this.value.length < min) { this.errors.push(`${this.field} can last than ${min} characters`); return this }
         if (max && this.value.length > max) { this.errors.push(`${this.field} can more than ${max} characters`); return this }
         return this

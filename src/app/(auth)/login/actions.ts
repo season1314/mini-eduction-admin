@@ -9,12 +9,6 @@ import { FormState } from "@/types/form";
 
 const prisma = new PrismaClient();
 
-/**
- * 
- * @param prevState 
- * @param formData 
- * @returns 
- */
 
 export async function loginAction(prevState: FormState, formData: FormData): Promise<FormState> {
     const email = formData.get("email") as string;
@@ -57,7 +51,9 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
         if (!isPasswordCorrect) return { code: 1, message: 'Incorrect password. Please try again.', data: { tenant: schemaName }, timestamp: Date.now() }
 
 
-        await SessionManager.create(admin.id, schemaName, {});
+        await SessionManager.create(admin.id, schemaName, {
+            email:admin.email
+        });
 
         return { code: 0, message: 'Successful Login', timestamp: Date.now(), data: { schemaName, } };
 

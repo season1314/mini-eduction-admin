@@ -1,9 +1,37 @@
+
+jest.mock('uuid', () => ({
+    v4: () => 'test-uuid-value',
+}));
+
+jest.mock('next/headers', () => ({
+    cookies: jest.fn(async () => ({
+        get: jest.fn((name: string) => ({ value: 'mock-session-id' })),
+        set: jest.fn(),
+        delete: jest.fn(),
+    })),
+}));
+
+jest.mock('@/src/lib/session', () => ({
+    SessionManager: {
+        verify: jest.fn(async () => ({
+            user_id: 1,
+            tenant_key: 'startaii'
+        }))
+    }
+}));
+
 import { getAdmins } from './actions';
 import { tenantDb } from "@/src/lib/tenantDb";
 import { Prisma } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { createAdmin } from './actions';
+import { authStorage } from '@/src/lib/authContext';
 
 jest.mock("@/src/lib/tenantDb");
 
+
+
+//List
 describe('Administrator Actions data test', () => {
     let mockDb: any;
 
@@ -25,9 +53,10 @@ describe('Administrator Actions data test', () => {
 
 
 
-        const result = await getAdmins(3, 'startaii', 20);
+        const result = await getAdmins( 'startaii',3, 20);
 
         expect(mockDb.$queryRaw).toHaveBeenCalledWith(
+            expect.anything(),
             expect.anything(),
             expect.anything(),
             20,
@@ -41,7 +70,7 @@ describe('Administrator Actions data test', () => {
         mockDb.$queryRaw.mockResolvedValueOnce([]).mockResolvedValueOnce([{ count: BigInt(0) }]);
 
         const keyword = "test";
-        await getAdmins(1, 'startaii', 20, keyword);
+        await getAdmins('startaii', 1, 20, keyword);
 
         const listCallArgs = mockDb.$queryRaw.mock.calls[0];
         const listSqlJson = JSON.stringify(listCallArgs);
@@ -59,9 +88,11 @@ describe('Administrator Actions data test', () => {
             .mockResolvedValueOnce([])
             .mockResolvedValueOnce([]);
 
-        const result = await getAdmins(1, 'startaii', 20);
+        const result = await getAdmins('startaii', 1, 20);
 
         expect(result.code).toBe(0);
         expect(result.data?.total).toBe(0);
     });
 });
+
+

@@ -1,8 +1,11 @@
 import { SessionManager } from './session';
 import { redirect } from 'next/navigation';
+import { authStorage } from '@/src/lib/authContext';
+
 
 export const withTenantAuth = (handler: any) => async (...args: any[]) => {
-    const schemaName = args[1];
+    const schemaName = args[0];
+
 
     if (schemaName === 'public' || !schemaName) {
         return await handler(...args);
@@ -15,8 +18,8 @@ export const withTenantAuth = (handler: any) => async (...args: any[]) => {
     if (schemaName !== session?.tenant_key) {
         return { code: 403, error: "TENANT_MISMATCH" };
     }
-    
-    return await handler(...args);
+
+    return authStorage.run(session, () => handler(...args));
 };
 
 
