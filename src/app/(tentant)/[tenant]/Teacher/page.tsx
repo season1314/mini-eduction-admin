@@ -3,15 +3,15 @@ import DataTable from "@/src/components/table"
 import { useEffect, use, useState } from "react";
 import { Search, ListRestart, UserPlus } from 'lucide-react';
 import { useAction } from "@/src/hook/useAction";
-import { getAdmins, deleteAdmin, switchStatus } from "./actions";
+import { getTeachers, deleteTeacher, switchStatus } from "./actions";
 import type { ReturnList } from "@/types/form";
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import AdminForm from "./create-admin-form"
-import EditAdminForm from "./edit-admin-form"
-import type { AdminDate } from "./edit-admin-form"
+import TeacherForm from "./create-teacher-form"
+import EditTeacherForm from "./edit-teacher-form"
+import type { TeacherDate } from "./edit-teacher-form"
 import { AlertDialogComponent } from "@/src/components/alertDialog"
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -22,20 +22,20 @@ const tableTitle = [
     { name: "Name", key: 'name' },
     { name: "Email", key: 'email' },
     { name: "Status", key: 'status', type: ['SWITCH'], disabled: ['role', 'SUPER'] },
-    { name: "Created", key: 'createAt' },
-    { name: "Creator", key: 'createdBy' },
-    { name: "Opt", key: 'opt', type: ['EDIT', 'DELETE', 'PERMISSION'], disabled: ['role', 'SUPER'] }]
+    { name: "Phone", key: 'phone' },
+    { name: "Gender", key: 'gender', type: ['GENDER'] },
+    { name: "Opt", key: 'opt', type: ['DETAIL', 'EDIT', 'DELETE'], disabled: ['role', 'SUPER'] }]
 
 
 
-export default function AdminListPage({ params }: { params: Promise<{ tenant: string }> }) {
+export default function TeacherListPage({ params }: { params: Promise<{ tenant: string }> }) {
     const { tenant } = use(params);
     const [page, setPage] = useState(1);
     const [keyword, setKeyword] = useState("");
-    const { data, loading, error, execute } = useAction<ReturnList, any[]>(getAdmins);
+    const { data, loading, error, execute } = useAction<ReturnList, any[]>(getTeachers);
     const [openCreate, setOpenCreate] = useState(false)
     const [openEdit, setOpenEdit] = useState(false)
-    const [adminData, setAdminData] = useState<AdminDate | null>(null);
+    const [teacherData, setTeacherData] = useState<TeacherDate | null>(null);
     const [openDelete, setOpenDelete] = useState(false)
 
     const handleSearch = (_keyword: string) => {
@@ -50,13 +50,13 @@ export default function AdminListPage({ params }: { params: Promise<{ tenant: st
 
     const handleTableAction = async (type: string, record: any) => {
         if (type == "EDIT") {
-            setAdminData({ id: record?.id || 0, name: record?.name || "", email: record?.email || "", password: "", confirmPwd: "" });
+            setTeacherData(record);
             setOpenEdit(true)
         }
-        if (type == "DELETE") {
-            setAdminData({ id: record?.id || 0, name: record?.name || "", email: record?.email || "", password: "", confirmPwd: "" });
-            setOpenDelete(true)
-        }
+        // if (type == "DELETE") {
+        //     setAdminData({ id: record?.id || 0, name: record?.name || "", email: record?.email || "", password: "", confirmPwd: "" });
+        //     setOpenDelete(true)
+        // }
         if (type == "SWITCH") {
             const res = await switchStatus(tenant, record.id)
             if (res.code == 0) {
@@ -78,12 +78,12 @@ export default function AdminListPage({ params }: { params: Promise<{ tenant: st
 
     const handleDeleteAction = async (confirm: boolean, data: any) => {
         if (confirm == true) {
-            const res = await deleteAdmin(tenant, data.id)
-            if (res.code == 0) {
-                toast.success(res.message)
-            } else {
-                toast.error(res.message)
-            }
+            // const res = await deleteAdmin(tenant, data.id)
+            // if (res.code == 0) {
+            //     toast.success(res.message)
+            // } else {
+            //     toast.error(res.message)
+            // }
             execute(tenant, page, 20, keyword);
             setOpenDelete(false)
         } else {
@@ -128,12 +128,12 @@ export default function AdminListPage({ params }: { params: Promise<{ tenant: st
             <Dialog open={openCreate} onOpenChange={setOpenCreate}>
                 <DialogContent className="sm:max-w-[625px]" onPointerDownOutside={(e) => e.preventDefault()}>
                     <DialogHeader>
-                        <DialogTitle>Create New Admin</DialogTitle>
+                        <DialogTitle>Create New Teacher</DialogTitle>
                         <DialogDescription>
-                            Fill in the details below to create a new admin. Changes are applied instantly.
+                            Fill in the details below to create a new teacher. Changes are applied instantly.
                         </DialogDescription>
                     </DialogHeader>
-                    <AdminForm
+                    <TeacherForm
                         tenant={tenant}
                         onSuccess={() => { setOpenCreate(false); execute(tenant, 1, 20, keyword); }}
                     />
@@ -141,21 +141,21 @@ export default function AdminListPage({ params }: { params: Promise<{ tenant: st
             </Dialog>
 
             <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-                <DialogContent className="sm:max-w-[625px]" onPointerDownOutside={(e) => e.preventDefault()}>
+                <DialogContent className="sm:max-w-[625px]">
                     <DialogHeader>
                         <DialogTitle>Edit Admin Info</DialogTitle>
                         <DialogDescription>
                             Update the administrator's profile information below.
                         </DialogDescription>
                     </DialogHeader>
-                    {adminData && (<EditAdminForm
+                    {teacherData && (<EditTeacherForm
                         tenant={tenant}
-                        data={adminData}
+                        data={teacherData}
                         onSuccess={() => { setOpenEdit(false); execute(tenant, page, 20, keyword); }}
                     />)}
                 </DialogContent>
             </Dialog>
-            <AlertDialogComponent open={openDelete} content={`This will PERMANENTLY DELETE administrator account.This action is irreversible and all data cannot be recovered.`} buttonCnt="Delete" type="DELETE" data={adminData} onAction={handleDeleteAction} title={`Delete ${adminData?.email} ?`} />
+            {/* <AlertDialogComponent open={openDelete} content={`This will PERMANENTLY DELETE administrator account.This action is irreversible and all data cannot be recovered.`} buttonCnt="Delete" type="DELETE" data={adminData} onAction={handleDeleteAction} title={`Delete ${adminData?.email} ?`} /> */}
         </div>
     )
 }

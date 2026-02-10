@@ -15,7 +15,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination"
-import { SquarePen, ShieldCheck, Trash2 } from 'lucide-react';
+import { SquarePen, ShieldCheck, Trash2, Transgender, Venus, Mars, CircleQuestionMark,FileText  } from 'lucide-react';
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { ReactNode, useState, useEffect } from "react";
@@ -52,6 +52,22 @@ const RENDER_STRATEGIES: Record<string, RenderFunc> = {
     ),
     SWITCH: (val, row, index, onAction, isDisabled) => (
         <Switch checked={val === 'ACTIVE'} onClick={() => onAction("SWITCH", row)} disabled={isDisabled} />
+    ),
+
+    GENDER: (_, row) => (
+
+        <div className="flex justify-center items-center w-full">
+            {row.gender === "MALE" ? <Mars className="text-blue-600 h-4 w-4" /> :
+                row.gender === "FEMALE" ? <Venus className="text-rose-500 h-4 w-4" /> :
+                    row.gender === "OTHER" ? <Transgender className="text-slate-600 h-4 w-4" /> :
+                        <CircleQuestionMark size="sm" className="text-gray-700 mr-1 h-4 w-4" />}
+        </div>
+    ),
+
+    DETAIL: (_, row, index, onAction) => (
+        <Button variant="ghost" size="sm" className="text-purple-600" onClick={() => onAction("DETAIL", row)}>
+            <FileText className="mr-1 h-4 w-4" />
+        </Button>
     )
 };
 
@@ -136,7 +152,7 @@ export default function DataTable({ title, list = [], totalPages = 1, currentPag
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={title.length} className="text-center py-10">"No data"</TableCell>
+                                    <TableCell colSpan={title.length} className="text-center py-10">No Data Available</TableCell>
                                 </TableRow>
                             ) : (<TableRow>
                                 <TableCell colSpan={title.length} className="text-center py-10">

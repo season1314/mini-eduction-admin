@@ -62,7 +62,7 @@ CREATE TABLE template_schema."Teacher" (
     birth_date DATE,
     gender  template_schema."Gender" DEFAULT 'UNKNOWN',
     phone_number TEXT,
-    email TEXT,
+    email TEXT NOT NULL UNIQUE,
     status template_schema."Status" DEFAULT 'ACTIVE',
     contact TEXT,
     des TEXT,
