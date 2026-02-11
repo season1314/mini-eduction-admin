@@ -1,20 +1,19 @@
 "use client"
-import DataTable from "@/src/components/table"
+import DataTableComponent from "@/src/components/table"
 import { useEffect, use, useState } from "react";
-import { Search, ListRestart, UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { useAction } from "@/src/hook/useAction";
 import { getAdmins, deleteAdmin, switchStatus } from "./actions";
 import type { ReturnList } from "@/types/form";
 import { Button } from "@/components/ui/button"
-import { Field } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import AdminForm from "./create-admin-form"
 import EditAdminForm from "./edit-admin-form"
 import type { AdminDate } from "./edit-admin-form"
-import { AlertDialogComponent } from "@/src/components/alertDialog"
+import AlertDialogComponent from "@/src/components/alertDialog"
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import SearchComponent from "@/src/components/search"
 
 
 const tableTitle = [
@@ -38,12 +37,10 @@ export default function AdminListPage({ params }: { params: Promise<{ tenant: st
     const [adminData, setAdminData] = useState<AdminDate | null>(null);
     const [openDelete, setOpenDelete] = useState(false)
 
-    const handleSearch = (_keyword: string) => {
+    const handleSearch = (type: string, _keyword: string) => {
         if (tenant) {
             execute(tenant, 1, 20, _keyword);
-        }
-        if (!_keyword) {
-            setKeyword("")
+            setKeyword(_keyword)
         }
     };
 
@@ -102,11 +99,7 @@ export default function AdminListPage({ params }: { params: Promise<{ tenant: st
         <div className="space-y-6">
             <div className="w-full flex items-center justify-between">
                 <div>
-                    <Field orientation="horizontal">
-                        <Input type="search" placeholder="Search email or name keyword" className="w-[300px] h-[38px]" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
-                        <Button onClick={() => handleSearch(keyword)}><Search /></Button>
-                        <Button variant="outline" onClick={() => handleSearch('')}><ListRestart /></Button>
-                    </Field>
+                    <SearchComponent placeholder="Search email or name keyword" onAction={handleSearch} />
                 </div>
                 <div>
                     <Button onClick={() => setOpenCreate(!openCreate)}><UserPlus /></Button>
@@ -117,7 +110,7 @@ export default function AdminListPage({ params }: { params: Promise<{ tenant: st
                 "transition-opacity duration-200",
                 loading ? "opacity-50 pointer-events-none" : "opacity-100"
             )}>
-                <DataTable
+                <DataTableComponent
                     title={tableTitle}
                     list={data?.data?.list}
                     totalPages={data?.data?.total}
@@ -126,7 +119,7 @@ export default function AdminListPage({ params }: { params: Promise<{ tenant: st
                     onPagination={handleTablePagination} />
             </div>
             <Dialog open={openCreate} onOpenChange={setOpenCreate}>
-                <DialogContent className="sm:max-w-[625px]" onPointerDownOutside={(e) => e.preventDefault()}>
+                <DialogContent className="sm:max-w-[725px]" onPointerDownOutside={(e) => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle>Create New Admin</DialogTitle>
                         <DialogDescription>
@@ -141,7 +134,7 @@ export default function AdminListPage({ params }: { params: Promise<{ tenant: st
             </Dialog>
 
             <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-                <DialogContent className="sm:max-w-[625px]" onPointerDownOutside={(e) => e.preventDefault()}>
+                <DialogContent className="sm:max-w-[725px]" onPointerDownOutside={(e) => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle>Edit Admin Info</DialogTitle>
                         <DialogDescription>

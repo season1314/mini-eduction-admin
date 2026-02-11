@@ -23,6 +23,7 @@ export type TeacherDate = {
     name: string;
     email: string;
     birth?: Date;
+    birthISO?: string;
     color?: string;
     createdAt: string;
     createdBy: string;
@@ -52,17 +53,11 @@ export default function TeacherForm({ tenant, onSuccess, data }: { tenant: strin
         <form action={formAction} className="grid gap-4 py-4">
             <input id="id" name="teacherId" type="hidden" required value={formDataState.id} />
             <input type="hidden" name="gender" value={formDataState.gender || ""} />
-            <input type="hidden" name="birth" value={
-                (() => {
-                    if (!formDataState.birth) return "";
-                    const d = new Date(formDataState.birth);
-                    return isNaN(d.getTime()) ? "" : d.toISOString();
-                })()
-            } />
+            <input type="hidden" name="birth" value={formDataState.birth ? format(formDataState.birth, "yyyy-MM-dd") : ""} />
             <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="email">Email <a className="text-[10px] text-destructive font-medium block h-[10px] leading-[10px]">{error.email}</a></Label>
-                    <Input id="email" name="email" type="email" placeholder="example@domain.com" required
+                    <Input id="email" name="email" type="email" disabled
                         value={formDataState.email}
                         onChange={(e) => setFormDataState({ ...formDataState, email: e.target.value })}
                         onFocus={() => setError({ ...error, email: '' })}
@@ -124,7 +119,7 @@ export default function TeacherForm({ tenant, onSuccess, data }: { tenant: strin
                             type="color"
                             name="color"
                             className="w-[120px] h-10 p-1 cursor-pointer"
-                            value={formDataState.color}
+                            value={formDataState.color || "#000"}
                             onChange={(e) => setFormDataState({ ...formDataState, color: e.target.value })}
                         />
                     </div>
@@ -140,12 +135,7 @@ export default function TeacherForm({ tenant, onSuccess, data }: { tenant: strin
                                 className={`justify-between font-normal ${!formDataState.birth ? "text-muted-foreground" : ""}`}
 
                             >
-                                {(() => {
-                                    if (!formDataState.birth) return "Select birthday";
-                                    const d = new Date(formDataState.birth);
-                                    if (isNaN(d.getTime())) {return "Select birthday";}
-                                    return format(d, "PPP");
-                                })()}
+                                {formDataState.birth ? format(formDataState.birth, "PPP") : "Select birthday"}
                                 <ChevronDownIcon />
                             </Button>
                         </PopoverTrigger>

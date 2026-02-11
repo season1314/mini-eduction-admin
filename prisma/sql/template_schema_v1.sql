@@ -46,6 +46,8 @@ CREATE TABLE template_schema."Student" (
     status template_schema."Status" DEFAULT 'ACTIVE',
     contact TEXT,
     des TEXT,
+    emergency_contact TEXT,
+    emergency_phone TEXT,
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now(),
     created_id INTEGER,

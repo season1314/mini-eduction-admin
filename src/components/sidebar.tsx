@@ -15,8 +15,9 @@ import {
 export function AppSidebar({ tenant }: { tenant: string }) {
     const items = [
         { title: "Dashboard", url: `/${tenant}/dashboard`, icon: LayoutDashboard },
-        { title: "Administrator", url: `/${tenant}/Administrator`, icon: LayoutDashboard },
-        { title: "Teacher", url: `/${tenant}/Teacher`, icon: LayoutDashboard }
+        { title: "Administrator", url: `/${tenant}/administrator`, icon: LayoutDashboard },
+        { title: "Teacher", url: `/${tenant}/teacher`, icon: LayoutDashboard },
+        { title: "Student", url: `/${tenant}/student`, icon: LayoutDashboard }
     ]
 
     return (

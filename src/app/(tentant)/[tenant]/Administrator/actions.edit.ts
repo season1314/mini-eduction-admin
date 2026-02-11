@@ -6,7 +6,7 @@ import { valid } from "@/src/lib/validators";
 import { FormState } from "@/types/form";
 
 
-export default async function editAdminRaw(schemaName: string,prevState: FormState, formData: FormData): Promise<FormState> {
+export default async function editRaw(schemaName: string,prevState: FormState, formData: FormData): Promise<FormState> {
     const { adminId, name, password, confirmPwd } = Object.fromEntries(formData as any);
 
     if (!adminId) { return { code: 1, message: 'Please provide a valid admin id.', timestamp: Date.now() } }

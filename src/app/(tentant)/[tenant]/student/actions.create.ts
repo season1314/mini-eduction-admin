@@ -9,13 +9,16 @@ import { authStorage } from '@/src/lib/authContext';
 
 export default async function createRaw(schemaName: string, prevState: FormState, formData: FormData): Promise<FormState> {
 
-    const { email, name, birth, gender, phone, contact, des, color } = Object.fromEntries(formData as any);
+    const { email, name, birth, gender, phone, contact, des, studentNo, emContact, emPhone } = Object.fromEntries(formData as any);
 
-    //verify data
-    const emailError = valid(email, ' ').required().email().getErrors()[0]
+    let emailError = "";
+
+    if (email) { emailError = valid(email, ' ').email().getErrors()[0] }
     const nameError = valid(name, ' ').required().length(2, 70).getErrors()[0]
-    if (emailError || nameError) {
-        return { code: 2, error: { email: emailError, name: nameError }, timestamp: Date.now() }
+    const studentNoError = valid(studentNo, '').required().length(2, 100).getErrors()[0]
+
+    if (emailError || nameError || studentNoError) {
+        return { code: 2, error: { email: emailError, name: nameError, studentNo: studentNoError }, timestamp: Date.now() }
     }
 
     if (!schemaName) {
@@ -29,19 +32,17 @@ export default async function createRaw(schemaName: string, prevState: FormState
         return { code: 1, message: 'Session expired. Please log in again.', timestamp: Date.now() }
     }
 
-
-    //verify the email not existed in tenant
     const db = await tenantDb(schemaName);
     const tenantTable = Prisma.raw(`"${schemaName}"."Teacher"`);
 
-    //verify email not existed in tenant teacher
-    const isEmailExisted = await db.$queryRaw<[{ count: bigint }]>`SELECT COUNT(*) as count FROM ${tenantTable} WHERE "email" = ${email}`
+    //verify studentNo not existed in tenant student
+    const isStudentExisted = await db.$queryRaw<[{ count: bigint }]>`SELECT COUNT(*) as count FROM ${tenantTable} WHERE "student_number" = ${studentNo}`
 
-    if (Number(isEmailExisted[0].count) > 0) {
-        return { code: 1, message: "This email is already in use", timestamp: Date.now() };
+    if (Number(isStudentExisted[0].count) > 0) {
+        return { code: 1, message: "This student number is already in use", timestamp: Date.now() };
     }
 
-    //create new teacher
+    //create new student
     const GenderType = `"template_schema"."Gender"`;
     const birthParam = (birth && birth !== "") ? birth : null;
     const genderParam = (gender && gender !== "") ? gender : 'UNKNOWN'
@@ -49,10 +50,10 @@ export default async function createRaw(schemaName: string, prevState: FormState
     try {
         await db.$queryRaw`
         INSERT INTO ${tenantTable} 
-        ("email", "name", "birth_date","gender","phone_number","updated_at", "contact","des","created_id", "created_by","color") 
-        VALUES (${email}, ${name}, ${birthParam}::DATE, ${genderParam}::${Prisma.raw(GenderType)},${phone},NOW(),${contact},${des}, ${session.user_id}, ${session.metadata.email},${color})`;
+        ("email", "emergency_contact" , "emergency_phone","student_number","name", "birth_date","gender","phone_number","updated_at", "contact","des","created_id", "created_by") 
+        VALUES (${email},${emContact},${emPhone},${studentNo}, ${name}, ${birthParam}::DATE, ${genderParam}::${Prisma.raw(GenderType)},${phone},NOW(),${contact},${des}, ${session.user_id}, ${session.metadata.email})`;
 
-        return { code: 0, message: 'Successful create new teacher', timestamp: Date.now() }
+        return { code: 0, message: 'Successful create new student', timestamp: Date.now() }
 
     } catch (error) {
         console.log(error)

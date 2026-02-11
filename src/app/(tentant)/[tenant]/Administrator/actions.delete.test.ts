@@ -57,8 +57,6 @@ describe('deleteAdmin Server Action', () => {
 
         const result = await deleteAdmin(ADMIN_ID, SCHEMA);
 
-        console.log('Result:', result);
-
         expect(result.code).toBe(0);
         
         // Ensure transaction was used

@@ -8,7 +8,7 @@ import { authStorage } from '@/src/lib/authContext';
 
 
 
-export default async function createAdminRaw(schemaName: string, prevState: FormState, formData: FormData): Promise<FormState> {
+export default async function createRaw(schemaName: string, prevState: FormState, formData: FormData): Promise<FormState> {
 
     const { email, name, password, confirmPwd } = Object.fromEntries(formData as any);
 

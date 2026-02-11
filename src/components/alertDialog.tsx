@@ -10,7 +10,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-import { X,Check   } from 'lucide-react';
+import { X,Check} from 'lucide-react';
 
 
 interface AlertType {
@@ -25,7 +25,7 @@ interface AlertType {
 }
 
 
-export function AlertDialogComponent({ title, content, data,onAction, open, onOpenChange }: AlertType) {
+export default function AlertDialogComponent({ title, content, data,onAction, open, onOpenChange }: AlertType) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>

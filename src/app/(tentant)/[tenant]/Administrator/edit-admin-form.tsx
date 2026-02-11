@@ -17,7 +17,7 @@ export type AdminDate = {
     confirmPwd?: string;
 }
 
-export default function EditAdminForm({ tenant, onSuccess, data }: { tenant: string, onSuccess: () => void, data: AdminDate }) {
+export default function AdminForm({ tenant, onSuccess, data }: { tenant: string, onSuccess: () => void, data: AdminDate }) {
     const editAdminWithTenant = editAdmin.bind(null, tenant);
     const [state, formAction, isPending] = useActionState<FormState, FormData>(editAdminWithTenant, { code: -1, timestamp: 1 });
     const rawData = data

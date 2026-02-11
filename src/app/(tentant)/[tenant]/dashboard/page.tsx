@@ -6,7 +6,7 @@ export default function DashboardPage({ params }: { params: { tenant: string } }
 
 
     return (
-        <></>    
+        <div >11111111111111111</div>    
 
     )
 }

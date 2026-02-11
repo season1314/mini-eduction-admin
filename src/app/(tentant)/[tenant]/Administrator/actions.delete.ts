@@ -2,7 +2,7 @@ import { tenantDb } from "@/src/lib/tenantDb"
 import { Prisma } from "@prisma/client";
 import { FormState } from "@/types/form";
 
-export default async function deleteAdminRaw(schemaName: string, adminId: string): Promise<FormState> {
+export default async function deleteRaw(schemaName: string, adminId: string): Promise<FormState> {
     //verify admin id
     if (!adminId) { return { code: 1, message: 'Please provide a valid admin id.', timestamp: Date.now() } }
 
