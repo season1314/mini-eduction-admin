@@ -10,7 +10,7 @@ CREATE SCHEMA IF NOT EXISTS template_schema;
 CREATE TYPE template_schema."Status" AS ENUM ('ACTIVE', 'BANNED');
 CREATE TYPE template_schema."Role" AS ENUM ('SUPER', 'ADMIN', 'USER');
 CREATE TYPE template_schema."Gender" AS ENUM ('MALE', 'FEMALE', 'OTHER', 'UNKNOWN');
-CREATE TYPE template_schema."MembershipStatus" AS ENUM ('ACTIVE', 'EXPIRED');
+CREATE TYPE template_schema."MembershipStatus" AS ENUM ('ACTIVE', 'EXPIRED','UPCOMING','INACTIVE');
 CREATE TYPE template_schema."ScheduleStatus" AS ENUM ('SCHEDULED', 'COMPLETED', 'CANCELLED');
 CREATE TYPE template_schema."VipType" AS ENUM ('online', 'offline');
 
@@ -26,8 +26,8 @@ CREATE TABLE template_schema."Admin" (
     permission TEXT[] DEFAULT '{}',
     role template_schema."Role" NOT NULL,
     status template_schema."Status" NOT NULL DEFAULT 'ACTIVE',
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
     created_id INTEGER DEFAULT 0,
     created_by TEXT
 );
@@ -39,7 +39,7 @@ CREATE TABLE template_schema."Student" (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     student_number VARCHAR(255) UNIQUE NOT NULL,
-    birth_date DATE,
+    birth_date TIMESTAMPTZ,
     gender template_schema."Gender" DEFAULT 'UNKNOWN',
     phone_number TEXT,
     email TEXT,
@@ -48,8 +48,8 @@ CREATE TABLE template_schema."Student" (
     des TEXT,
     emergency_contact TEXT,
     emergency_phone TEXT,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
     created_id INTEGER,
     created_by TEXT
 );
@@ -60,16 +60,17 @@ CREATE TABLE template_schema."Student" (
 CREATE TABLE template_schema."Teacher" (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
+    teacher_number TEXT NOT NULL UNIQUE, 
     color TEXT,
-    birth_date DATE,
+    birth_date TIMESTAMPTZ,
     gender  template_schema."Gender" DEFAULT 'UNKNOWN',
     phone_number TEXT,
-    email TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL,
     status template_schema."Status" DEFAULT 'ACTIVE',
     contact TEXT,
     des TEXT,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
     created_id INTEGER,
     created_by TEXT
 );
@@ -82,8 +83,8 @@ CREATE TABLE template_schema."Class" (
     name TEXT UNIQUE NOT NULL,
     description TEXT,
     teacher_id INT,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
     created_id INTEGER,
     created_by TEXT
 );
@@ -95,7 +96,7 @@ CREATE TABLE template_schema."Class" (
 CREATE TABLE IF NOT EXISTS template_schema."ClassStudent" (
     class_id INT REFERENCES template_schema."Class"(id) ON DELETE CASCADE,
     student_id INT REFERENCES template_schema."Student"(id) ON DELETE CASCADE,
-    joined_at TIMESTAMP DEFAULT now(),
+    joined_at TIMESTAMPTZ DEFAULT now(),
     PRIMARY KEY (class_id, student_id)
 );
 
@@ -106,8 +107,8 @@ CREATE TABLE template_schema."Lecture" (
     id SERIAL PRIMARY KEY,
     course_name TEXT NOT NULL,
     type TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now()
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- ------------------------
@@ -115,25 +116,22 @@ CREATE TABLE template_schema."Lecture" (
 -- ------------------------
 CREATE TABLE template_schema."Membership" (
     id SERIAL PRIMARY KEY,
-    membership_expiry TIMESTAMP NOT NULL,
-    start_time TIMESTAMP NOT NULL,
-    status template_schema."MembershipStatus" NOT NULL,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
+    membership_expiry TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
     student_id INT UNIQUE NOT NULL
 );
 
 -- ------------------------
 -- MembershipOrder 
 -- ------------------------
-CREATE TABLE template_schema."MembershipOrder" (
+CREATE TABLE template_schema."MembershipRecord" (
     id BIGSERIAL PRIMARY KEY,
-    months_added INT DEFAULT 0,
-    old_expiry TIMESTAMP,
-    new_expiry TIMESTAMP NOT NULL,
+    old_expiry TIMESTAMPTZ,
+    new_expiry TIMESTAMPTZ NOT NULL,
     note TEXT,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
     student_id INT,
     student_record JSONB NOT NULL,
     created_id INT,
@@ -147,8 +145,8 @@ CREATE TABLE template_schema."LectureOrder" (
     id BIGSERIAL PRIMARY KEY,
     months_added INT DEFAULT 0,
     note TEXT,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
     student_id INT,
     student_record JSONB NOT NULL,
     created_id INT,
@@ -166,8 +164,8 @@ CREATE TABLE template_schema."StudentLecture" (
     total_lessons INT DEFAULT 0,
     remained_lessons INT DEFAULT 0,
     status template_schema."Status" DEFAULT 'ACTIVE',
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
     UNIQUE(student_id, lecture_id)
 );
 
@@ -181,13 +179,13 @@ CREATE TABLE template_schema."ClassSchedule" (
     is_deductible BOOLEAN DEFAULT TRUE,
     deduct_amount FLOAT DEFAULT 1.0,
     teacher_id INT,
-    date DATE NOT NULL,
+    date TIMESTAMPTZ NOT NULL,
     begin VARCHAR(255) NOT NULL,
     finish  VARCHAR(255) NOT NULL,
     classroom TEXT,
     status template_schema."ScheduleStatus" DEFAULT 'SCHEDULED',
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
     admin_id INT
 );
 
@@ -196,7 +194,7 @@ CREATE TABLE template_schema."ClassSchedule" (
 -- ------------------------
 CREATE TABLE template_schema."VipSchedule" (
     id SERIAL PRIMARY KEY,
-    date DATE,
+    date TIMESTAMPTZ,
     begin VARCHAR(255),
     finish  VARCHAR(255),
     student_id INT,
@@ -208,11 +206,36 @@ CREATE TABLE template_schema."VipSchedule" (
     classroom VARCHAR(255),
     count FLOAT DEFAULT 0,
     count_add VARCHAR(255),
-    time_zone TIMESTAMP NOT NULL,
+    time_zone TIMESTAMPTZ NOT NULL,
     online_type VARCHAR(255),
     content VARCHAR(255),
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now()
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ------------------------
+-- UserSetting
+-- ------------------------
+CREATE TABLE template_schema."UserSetting" (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    page_key VARCHAR(255) NOT NULL,
+    configs JSONB DEFAULT '{}'::jsonb,
+    is_default BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT unique_user_page UNIQUE (user_id, page_key)
+);
+
+
+-- ------------------------
+-- SystemConfigs
+-- ------------------------
+CREATE TABLE template_schema."SystemConfigs" (
+    config_key VARCHAR(100) PRIMARY KEY,
+    config_value TEXT,
+    description TEXT,
+    updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- ------------------------

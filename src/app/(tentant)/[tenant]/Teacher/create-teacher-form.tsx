@@ -22,30 +22,30 @@ export default function TeacherForm({ tenant, onSuccess }: { tenant: string, onS
     const [state, formAction, isPending] = useActionState<FormState, FormData>(createTeacherWithTenant, { code: -1, timestamp: 1 });
     const [open, setOpen] = React.useState(false)
     const [formDataState, setFormDataState] = useState({
-        email: "",
-        name: "",
-        phone: "",
-        contact: "",
-        color: "#000000",
-        des: "",
-        gender: "UNKNOWN",
-        birth: undefined as Date | undefined,
-
+        email: "",name: "",phone: "",teacherNo:"",contact: "",color: "#000000",
+        des: "",gender: "UNKNOWN",birth: undefined as Date | undefined
     });
-    const [error, setError] = useState<Record<string, string | undefined>>({
-        email: "",
-        name: "",
-    });
+    const [error, setError] = useState<Record<string, string | undefined>>({email: "",name: "",teacherNo:""});
 
     useEffect(() => {
         if (state.code == 2 && state.error) { setError(state.error) }
         if (state.code == 1) { toast.error(state.message) }
         if (state.code == 0) { toast.success(state.message); onSuccess(); }
     }, [state]);
+    
     return (
         <form action={formAction} className="grid gap-4 py-4">
             <input type="hidden" name="gender" value={formDataState.gender} />
             <input type="hidden" name="birth" value={formDataState.birth?.toISOString() || ""} />
+            <div className="grid gap-2">
+                    <Label htmlFor="teacherNo">Teacher No.<a className="text-[10px] text-destructive font-medium block h-[10px] leading-[10px]">{error.teacherNo}</a></Label>
+                    <Input id="teacherNo" name="teacherNo" type="text" placeholder="TID:0000000000" required
+                        value={formDataState.teacherNo}
+                        onChange={(e) => setFormDataState({ ...formDataState, teacherNo: e.target.value })}
+                        onFocus={() => setError({ ...error, teacherNo: '' })}
+                    />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="email">Email <a className="text-[10px] text-destructive font-medium block h-[10px] leading-[10px]">{error.email}</a></Label>
@@ -75,7 +75,7 @@ export default function TeacherForm({ tenant, onSuccess }: { tenant: string, onS
                         onFocus={() => setError({ ...error, phone: '' })}
                     />
                 </div>
-
+            
                 <div className="grid gap-2">
                     <Label htmlFor="contact">Contact</Label>
                     <Input id="contact" name="contact" placeholder="WhatApp / Wechat / Line"
@@ -87,36 +87,6 @@ export default function TeacherForm({ tenant, onSuccess }: { tenant: string, onS
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="gender">Gender</Label>
-                        <Select value={formDataState.gender} onValueChange={(newValue: string) => setFormDataState({ ...formDataState, gender: newValue })} name="gender">
-                            <SelectTrigger className="w-[120px]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectItem value="MALE">Male</SelectItem>
-                                    <SelectItem value="FEMALE">Female</SelectItem>
-                                    <SelectItem value="OTHER">Other</SelectItem>
-                                    <SelectItem value="UNKNOWN">Unknown</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="gender">Color</Label>
-                        <Input
-                            type="color"
-                            name="color"
-                            className="w-[120px] h-10 p-1 cursor-pointer"
-                            value={formDataState.color}
-                            onChange={(e) => setFormDataState({ ...formDataState, color: e.target.value })}
-                        />
-                    </div>
-                </div>
-
                 <div className="grid gap-2">
                     <Label htmlFor="birth">Date of Birth</Label>
                     <Popover open={open} onOpenChange={setOpen}>
@@ -144,6 +114,34 @@ export default function TeacherForm({ tenant, onSuccess }: { tenant: string, onS
                             />
                         </PopoverContent>
                     </Popover>
+                </div>
+                <div className="grid grid-cols-2">
+                    <div className="grid gap-2">
+                        <Label htmlFor="gender">Gender</Label>
+                        <Select value={formDataState.gender} onValueChange={(newValue: string) => setFormDataState({ ...formDataState, gender: newValue })}>
+                            <SelectTrigger className="w-[120px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value="MALE">Male</SelectItem>
+                                    <SelectItem value="FEMALE">Female</SelectItem>
+                                    <SelectItem value="OTHER">Other</SelectItem>
+                                    <SelectItem value="UNKNOWN">Unknown</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="gender">Color</Label>
+                        <Input
+                            type="color"
+                            name="color"
+                            className="w-[120px] h-10 p-1 cursor-pointer"
+                            value={formDataState.color}
+                            onChange={(e) => setFormDataState({ ...formDataState, color: e.target.value })}
+                        />
+                    </div>
                 </div>
             </div>
             <div className="grid gap-4">

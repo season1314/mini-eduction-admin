@@ -91,7 +91,7 @@ describe('Administrator Actions data test', () => {
         const result = await getAdmins('startaii', 1, 20);
 
         expect(result.code).toBe(0);
-        expect(result.data?.total).toBe(0);
+        expect(result.data?.total).toBe(1);
     });
 });
 

@@ -10,7 +10,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-import { X,Check} from 'lucide-react';
+import { X, Check } from 'lucide-react';
 
 
 interface AlertType {
@@ -24,8 +24,7 @@ interface AlertType {
     onOpenChange?: (open: boolean) => void;
 }
 
-
-export default function AlertDialogComponent({ title, content, data,onAction, open, onOpenChange }: AlertType) {
+export default function AlertDialogComponent({ title, content, data, onAction, open, onOpenChange }: AlertType) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
@@ -37,7 +36,7 @@ export default function AlertDialogComponent({ title, content, data,onAction, op
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel variant="outline" onClick={() => onAction(false, data)}><X /></AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onAction(true, data)}><Check  /></AlertDialogAction>
+                    <AlertDialogAction onClick={() => onAction(true, data)}><Check /></AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

@@ -16,8 +16,8 @@ CREATE TABLE "Admin" (
     "status" "Status" NOT NULL DEFAULT 'ACTIVE',
     "role" "Role" NOT NULL DEFAULT 'ADMIN',
     "created_id" INTEGER DEFAULT 0,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL
 );
 
 -- 2. Tenant Info
@@ -26,8 +26,8 @@ CREATE TABLE "Tenant" (
     "name" TEXT NOT NULL UNIQUE,
     "key" TEXT NOT NULL UNIQUE,
     "schema_name" TEXT NOT NULL UNIQUE,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
     "status" "TenantStatus" NOT NULL DEFAULT 'PENDING',
     "created_id" INTEGER,
     CONSTRAINT "fk_tenant_created_id" FOREIGN KEY ("created_id") REFERENCES "Admin"("id") ON DELETE SET NULL
@@ -39,8 +39,8 @@ CREATE TABLE "TenantUser" (
     "id" SERIAL PRIMARY KEY,
     "tenant_id" INTEGER NOT NULL,
     "email" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
     "tenant_key" TEXT NOT NULL,
 CONSTRAINT "TenantUser_tenant_key_fkey" FOREIGN KEY ("tenant_key") REFERENCES "Tenant"("key") ON DELETE RESTRICT ON UPDATE CASCADE,
 CONSTRAINT "TenantUser_tenant_key_email_key" UNIQUE ("tenant_key", "email")
@@ -52,8 +52,8 @@ CREATE TABLE "Session" (
     "user_id" INTEGER NOT NULL,
     "tenant_key" TEXT NOT NULL,
     "metadata" JSONB DEFAULT '{}',
-    "expires_at" TIMESTAMP(3) NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "expires_at" TIMESTAMPTZ NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 

@@ -21,8 +21,8 @@ const tableTitle = [
     { name: "Name", key: 'name' },
     { name: "Email", key: 'email' },
     { name: "Status", key: 'status', type: ['SWITCH'], disabled: ['role', 'SUPER'] },
-    { name: "Created", key: 'createAt' },
-    { name: "Creator", key: 'createdBy' },
+    { name: "Registration Date", key: 'createAt' },
+    { name: "Created By", key: 'createdBy' },
     { name: "Opt", key: 'opt', type: ['EDIT', 'DELETE', 'PERMISSION'], disabled: ['role', 'SUPER'] }]
 
 

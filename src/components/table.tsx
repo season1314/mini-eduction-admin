@@ -1,24 +1,14 @@
 "use client"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
+    Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious,
 } from "@/components/ui/pagination"
 import { SquarePen, ShieldCheck, Trash2, Transgender, Venus, Mars, CircleQuestionMark, FileText } from 'lucide-react';
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { ReactNode, useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 
 interface DataTableProps {
@@ -73,7 +63,53 @@ const RENDER_STRATEGIES: Record<string, RenderFunc> = {
         <div className="flex justify-center items-center w-full">
             <div style={{ color: `${row.color}` }}>{val}</div>
         </div>
-    )
+    ),
+
+    MEMBER: (val, row, index, onAction) => {
+        if (row.membershipStatus == 'NONE') {
+            return (
+                <div className="flex justify-center items-center w-full">
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300" onClick={() => onAction('MEMBER', row)}>NONE</Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Click to create membership</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
+            )
+        }
+        if (row.membershipStatus == 'EXPIRED') {
+            return (
+                <div className="flex justify-center items-center w-full">
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <Badge className="bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300" onClick={() => onAction('MEMBER', row)}>EXPIRED</Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Expired date: {row.membershipExpiryString}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
+            )
+        }
+        if (row.membershipStatus == 'ACTIVE') {
+            return (
+                <div className="flex justify-center items-center w-full">
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <Badge className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300" onClick={() => onAction('MEMBER', row)}>ACTIVE</Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Expired date: {row.membershipExpiryString}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
+            )
+
+        }
+    }
 };
 
 const getVisiblePages = (current: number, total: number) => {
@@ -103,8 +139,6 @@ const getVisiblePages = (current: number, total: number) => {
 
     return pages;
 };
-
-
 
 
 export default function DataTableComponent({ title, list = [], totalPages = 1, currentPage = 1, onAction, onPagination }: DataTableProps) {
