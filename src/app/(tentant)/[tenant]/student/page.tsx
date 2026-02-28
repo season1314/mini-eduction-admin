@@ -1,27 +1,22 @@
 "use client"
 import DataTableComponent from "@/src/components/table"
 import { useEffect, use, useState } from "react";
-import { UserPlus } from 'lucide-react';
 import { useAction } from "@/src/hook/useAction";
-import { getStudent, switchStatus } from "./actions";
+import { getStudent } from "./actions";
 import type { ReturnList } from "@/types/form";
 import { Button } from "@/components/ui/button";
 import SelectionComponent from "@/src/components/selection"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import StudentForm from "./create-student-form"
 import DateRangerComponent from "@/src/components/dateRanger"
-import MemberForm from "../membership/create-member-from"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Search, ListRestart } from 'lucide-react';
-
-
-// import EditTeacherForm from "./edit-teacher-form"
-// import DesTeacherForm from "./des-teacher-form"
-import type { studentDate } from "./edit-student-form"
-import AlertDialogComponent from "@/src/components/alertDialog"
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import ToggleGroupComponent from "@/src/components/toggleGroup"
+import StudentForm from "./create-student-form"
+import EditStudentForm from "./edit-student-form"
+import DeleteStudentForm from "./delete-student-form"
+import { setOperationList } from "@/lib/commonFunc"
+import MemberForm from "../membership/create-member-from";
 
 
 const selection = [
@@ -32,140 +27,174 @@ const selection = [
 ]
 
 const tableTitle = [
-    { name: "Id", key: 'id' },
-    { name: "Student Name", key: 'name' },
     { name: "Student No.", key: 'studentNo' },
-    { name: "Status", key: 'status', type: ['SWITCH'] },
+    { name: "Student Name", key: 'name' },
+    { name: "Status", key: 'status', type: ['STATUS'] },
     { name: "Membership", key: 'membership', type: ['MEMBER'] },
-    { name: "Email", key: 'email' },
-    { name: "Phone", key: 'phone' },
     { name: "Registration Time", key: 'registration' },
-    { name: "Opt", key: 'opt', type: ['DETAIL', 'EDIT', 'DELETE'] }
+]
+
+const operationList = [
+    { value: 'USERCREATE', icon: "UserPlus", disabled: false },
+    { value: 'USEREDIT', icon: "UserCog", disabled: true },
+    { value: 'USERMEMBER', icon: "UserStar", disabled: true },
+    { value: 'USERDELETE', icon: "UserX", disabled: true }
 ]
 
 
-const dialogCnt = {
-    create: ["Create New Student", "Fill in the details below to create a new student. Changes are applied instantly.", "CREATE"]
+export type StudentData = {
+    id: number;
+    name: string;
+    email: string;
+    studentNo: string;
+    birth?: Date;
+    createdAt: string;
+    createdBy: string;
+    gender?: string;
+    phone?: string;
+    des?: string;
+    contact?: string;
+    membershipExpiry?: Date
+    emContact: string;
+    emPhone: string;
+    status: string;
+    confirmStudentNo?: string
 }
-
-
 
 export default function StudentListPage({ params }: { params: Promise<{ tenant: string }> }) {
     const { tenant } = use(params);
     const [page, setPage] = useState(1);
     const [keyword, setKeyword] = useState("");
+    const [operations, setOperations] = useState(operationList)
     const { data, loading, error, execute } = useAction<ReturnList, any[]>(getStudent);
-    const [openDialog, setOpenDialog] = useState({ title: "", des: "", type: "", dialog: false, alert: false })
-    const [studentData, setStudentData] = useState<studentDate | null>(null);
-    const [dateRange, setDateRange] = useState<{ start: Date | undefined; end: Date | undefined; }>({ start: undefined, end: undefined });
+    const [studentData, setStudentData] = useState<StudentData | null>(null);
+    const [dateRange, setDateRange] = useState<{ start: string | undefined | null; end: string | undefined | null; }>({ start: undefined, end: undefined });
     const [expiryStatus, setExpiryStatus] = useState("")
+    const [optSelection, setOptSelection] = useState('USERCREATE')
+    const [clearDateRanger, setClearDateRanger] = useState(false)
+    const [tableId, setTableId] = useState(0)
+
+    const handleOperation = (value: string) => {
+        setOptSelection(value)
+        if (value === "USERCREATE") {
+            setOperations(setOperationList([false, true, true, true], operationList))
+            setStudentData(null)
+            setTableId(0)
+            return
+        }
+        setOperations(setOperationList([false, false, false, false], operationList))
+    }
+
+
+    const handleSuccess = (type: string) => {
+        if (type == "USERCREATE") {
+            execute(tenant, 1, 20, keyword);
+            setStudentData(null)
+            setTableId(0)
+            return
+        }
+        if (type == "USERDELETE") {
+            setOperations(setOperationList([false, true, true, true], operationList))
+            setOptSelection('USERCREATE')
+            setStudentData(null)
+            setTableId(0)
+            execute(tenant, page, 20, keyword, dateRange.start, dateRange.end, expiryStatus)
+            return
+        }
+        if (type == "USEREDIT") {
+            execute(tenant, page, 20, keyword, dateRange.start, dateRange.end, expiryStatus)
+            return
+        }
+        if (type == "USERMEMBER") {
+            execute(tenant, page, 20, keyword, dateRange.start, dateRange.end, expiryStatus)
+            return
+        }
+    }
 
     const handleSearch = (type: string) => {
-        if (type == 'search') {
+        setOperations(setOperationList([false, true, true, true], operationList));
+        setTableId(0); setOptSelection('USERCREATE');
+        setStudentData(null)
+        if (type == "search") {
             execute(tenant, 1, 20, keyword, dateRange.start, dateRange.end, expiryStatus)
-        } else if (type == 'reset') {
-            setKeyword("")
-            setDateRange({ start: undefined, end: undefined })
-            setExpiryStatus("")
-            execute(tenant, 1, 20, "", undefined, undefined, "")
         } else {
-
+            setExpiryStatus("")
+            setClearDateRanger(!clearDateRanger)
+            execute(tenant, 1, 20, keyword, null, null, "")
         }
     };
 
-    const handleDateRange = (selectedDate: Date | undefined, type: 'start' | 'end') => {
-        setDateRange((prev) => ({ ...prev, [type]: selectedDate }));
+    const handleDateRange = (selectedDate: { start: string | null | undefined, end: string | null | undefined }) => {
+        setDateRange(selectedDate)
     };
 
     const handleTablePagination = (page: number) => {
         if (page == data?.data?.page) { return }
-        execute(tenant, 1, 20, keyword, dateRange.start, dateRange.end, expiryStatus)
+        execute(tenant, page, 20, keyword, dateRange.start, dateRange.end, expiryStatus)
     }
 
 
 
     const handleTableAction = async (type: string, record: any) => {
-        if (type == "MEMBER") {
-            setStudentData(record);
-            setOpenDialog({ title: "Manage Membership", des: "Create a new membership or extend the current membership duration for this student.", type: "MEMBER", dialog: true, alert: false })
+        if (!record) {
+            setOperations(setOperationList([false, true, true, true], operationList));
+            setOptSelection('USERCREATE');
+            setTableId(0);
+            setStudentData(null)
+        } else {
+            setOperations(setOperationList([false, false, false, false], operationList))
+            setTableId(record.id);
+            setStudentData(record)
+            if (optSelection == "USERCREATE" || optSelection == "USERDELETE") {
+                setOptSelection('USEREDIT');
+            }
         }
-        // if (type == "EDIT") { setTeacherData(record); setOpenDialog({ title: "Edit Teacher Info", des: "Update the teacher's profile information below.", type: "EDIT", dialog: true, alert: false }) }
-        // if (type == "DELETE") { setTeacherData(record); setOpenDialog({ title: "", des: "", type: "DELETE", dialog: false, alert: true }) }
-        // if (type == "DETAIL") {setTeacherData(record); setOpenDialog({ title: record?.name || "", des: record?.email || "", type: "DETAIL", dialog: true, alert: false })}
-        // if (type == "SWITCH") {
-        //     const res = await switchStatus(tenant, record.id)
-        //     if (res.code == 0) {
-        //         toast.success(res.message); execute(tenant, 1, 20, keyword);
-        //     } else { toast.error(res.message) }
-        // }
     }
-
-    const handleDeleteAction = async (confirm: boolean, data: any) => {
-        // if (confirm == true) {
-        //     const res = await deleteTeacher(tenant, data.id)
-        //     if (res.code == 0) { toast.success(res.message) }
-        //     else { toast.error(res.message) }
-        //     execute(tenant, page, 20, keyword);
-        //     setOpenDialog({ title: "", des: "", type: "", dialog: false, alert: false })
-        // } else {
-        //     setOpenDialog({ title: "", des: "", type: "", dialog: false, alert: false })
-        // }
-    }
-
 
 
     useEffect(() => {
-        if (tenant) { execute(tenant, page, 20, keyword) }
+        if (tenant) { execute(tenant, page, 20, keyword, dateRange.start, dateRange.end, expiryStatus) }
     }, [tenant, page, execute]);
 
 
     return (
         <div className="space-y-4">
             <div className="w-full flex items-center justify-between">
-                <div>
+                <div className="w-[54%]">
                     <Field orientation="horizontal">
-                        <Input type="search" placeholder="Search by student number or name..." className="w-[300px] h-[38px]" 
-                                value={keyword} onChange={(e) => setKeyword(e.target.value)} />
-                        <DateRangerComponent defaultText="Registration from ~ end" start={dateRange.start} end={dateRange.end} onAction={handleDateRange} />
-                        <SelectionComponent defaultText="Membership status" items={selection} onAction={(val) => { setExpiryStatus(val) }} className="w-[200px]"
-                            key={1} id={`student-select-1`} value={expiryStatus} />
+                        <Input type="search" placeholder="Search by student number or name..." className="w-[300px] h-[38px]"
+                            value={keyword} onChange={(e) => setKeyword(e.target.value)} />
+                        <DateRangerComponent defaultText="Registration from ~ end" onAction={handleDateRange} clear={clearDateRanger} />
+                        <SelectionComponent defaultText="Membership status" items={selection} onAction={(val) => { setExpiryStatus(val) }} className="w-[200px]" value={expiryStatus} />
                         <Button onClick={() => handleSearch("search")}><Search /></Button>
                         <Button variant="outline" onClick={() => handleSearch("reset")}><ListRestart /></Button>
                     </Field>
                 </div>
-                <div>
-                    <Button onClick={() => setOpenDialog({
-                        title: dialogCnt.create[0], des: dialogCnt.create[1],
-                        type: dialogCnt.create[2], dialog: true, alert: false
-                    })}>
-                        <UserPlus />
-                    </Button>
+                <div className="w-[45%] font-bold">
+                    <ToggleGroupComponent list={operations} onSelect={handleOperation} selectedValue={optSelection} />
                 </div>
             </div>
-            <div className={cn(
-                "transition-opacity duration-200",
-                loading ? "opacity-50 pointer-events-none" : "opacity-100"
-            )}>
-                <DataTableComponent
-                    title={tableTitle}
-                    list={data?.data?.list}
-                    totalPages={data?.data?.total}
-                    currentPage={data?.data?.page}
-                    onAction={handleTableAction}
-                    onPagination={handleTablePagination} />
-            </div>
-            <Dialog open={openDialog.dialog} onOpenChange={() => setOpenDialog(prev => ({ ...prev, alert: false, dialog: false }))}>
-                <DialogContent className="sm:max-w-[725px]" onPointerDownOutside={(e) => e.preventDefault()} onOpenAutoFocus={(e) => { if (openDialog.type === "DETAIL") { e.preventDefault() } }}>
-                    <DialogHeader><DialogTitle>{openDialog.title}</DialogTitle><DialogDescription>{openDialog.des}</DialogDescription></DialogHeader>
-                    {openDialog.type == "CREATE" ? (<StudentForm tenant={tenant} onSuccess={() => { setOpenDialog(prev => ({ ...prev, alert: false, dialog: false })); execute(tenant, 1, 20, keyword); }} />) :
-                        openDialog.type == "MEMBER" ? studentData && (<MemberForm data={studentData} tenant={tenant} onSuccess={() => { setOpenDialog(prev => ({ ...prev, alert: false, dialog: false })); execute(tenant, 1, 20, keyword); }} />) : <></>
-                        // openDialog.type == "EDIT" ? teacherData && (<EditTeacherForm tenant={tenant} data={teacherData} onSuccess={() => { setOpenDialog(prev => ({ ...prev, alert: false, dialog: false })); execute(tenant, page, 20, keyword) }} />) :
-                        //     openDialog.type == "DETAIL" ? teacherData && (<DesTeacherForm tenant={tenant} data={teacherData} onSuccess={() => { }} />) : (<></>)
-                    }
-                </DialogContent>
-            </Dialog>
 
-            {/* <AlertDialogComponent open={openDialog.alert} content={`This will PERMANENTLY DELETE teacher.This action is irreversible and all data cannot be recovered.`} buttonCnt="Delete" type="DELETE" data={teacherData} onAction={handleDeleteAction} title={`Delete ${teacherData?.email} ?`} /> */}
+            <div className="w-full flex justify-between">
+                <div className={cn("transition-opacity duration-200 w-[54%] h-[calc(100vh-240px)]", loading ? "opacity-50 pointer-events-none" : "opacity-100")}>
+                    <DataTableComponent
+                        title={tableTitle}
+                        list={data?.data?.list}
+                        totalPages={data?.data?.total}
+                        currentPage={data?.data?.page}
+                        onAction={handleTableAction}
+                        onPagination={handleTablePagination}
+                        selectionId={tableId}
+                    />
+                </div>
+                <div className={cn("transition-opacity duration-200 w-[45%] ml-[1%] min-w-[400px] border border-gray-200 rounded-[5px] px-[20px]", loading ? "opacity-50 pointer-events-none" : "opacity-100")}>
+                    {!studentData && <StudentForm tenant={tenant} onSuccess={() => handleSuccess('USERCREATE')} />}
+                    {studentData && optSelection == "USEREDIT" && <EditStudentForm tenant={tenant} data={studentData} onSuccess={() => handleSuccess('USEREDIT')} />}
+                    {studentData && optSelection == "USERDELETE" && <DeleteStudentForm tenant={tenant} data={studentData} onSuccess={() => handleSuccess('USERDELETE')} />}
+                    {studentData && optSelection == "USERMEMBER" && <MemberForm tenant={tenant} data={studentData} onSuccess={() => handleSuccess('USERMEMBER')} />}
+
+                </div>
+            </div>
         </div>
     )
 }

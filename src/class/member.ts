@@ -18,6 +18,12 @@ export type BaseMemberProps = {
     createdAt: Date;
     createdId: number | null;
     createdBy: string | null;
+    studentName?: string;
+    studentNo?: string;
+    oldExpiryString?: string;
+    newExpiryString?: string;
+    createdAtString?: string;
+    color?: string
 };
 
 export class BaseMember {
@@ -31,6 +37,12 @@ export class BaseMember {
     createdAt!: Date;
     createdId!: number | null;
     createdBy!: string | null;
+    studentName?: string;
+    studentNo?: string;
+    oldExpiryString?: string;
+    newExpiryString?: string;
+    createdAtString?: string;
+    color?: string
 
     private constructor(props: BaseMemberProps) {
         Object.assign(this, props);
@@ -41,14 +53,38 @@ export class BaseMember {
             id: data.id ?? data.memberId,
             oldExpiry: data.memberOldExpiry ?? null,
             newExpiry: data.memberNewExpiry ?? null,
-            note: data.note,
+            note: data.note || '-',
             studentId: data.studentId ?? data.student_id,
-            studentRecord: data.studentRecord ?? data.student_record ?? { studentName: data.studentName, studentNo: data.studentNo } ?? {},
+            studentRecord: data.studentRecord ?? data.student_record ?? { studentName: data.studentName, studentNo: data.studentNo },
             updatedAt: new Date(),
             createdAt: new Date(),
             createdId: data.createdId ?? data.created_id ?? session.user_id ?? null,
             createdBy: data.createdBy ?? data.created_by ?? session?.metadata ?? null
         });
+    }
+
+    static async membershipRecordListFormat(data: any, schemaName: string) {
+        const tz = await getSystemTimeZone(schemaName)
+        const sRecord = data.student_record ?? data.studentRecord
+        const oldExpiry = data.old_expiry ?? data.oldExpiry
+        const newExpiry = data.new_expiry ?? data.newExpiry
+        return new BaseMember({
+            id: data.id ? Number(data.id) : data.id,
+            oldExpiry: oldExpiry,
+            newExpiry: newExpiry,
+            oldExpiryString: oldExpiry ? dayjs(oldExpiry).format('DD/MM/YYYY') : '-',
+            newExpiryString: newExpiry ? dayjs(newExpiry).format('DD/MM/YYYY') : '-',
+            note: data.note || '-',
+            studentId: data.student_id ?? data.studentId,
+            studentRecord: sRecord,
+            studentName: data.studentName ?? sRecord.studentName,
+            studentNo: data.studentNo ?? sRecord.studentNo,
+            updatedAt: data.updated_at,
+            createdAt: data.created_at,
+            createdAtString: data.created_at ? dayjs(data.created_at).tz(tz).format('DD/MM/YYYY HH:mm') : '-',
+            createdId: data.created_id,
+            createdBy: data.created_record?.email
+        }).toObject()
     }
 
     validateBaseForm() {
@@ -66,48 +102,6 @@ export class BaseMember {
         }
         return { hasError: false }
     }
-}
-
-
-export class Membership {
-    id: number;
-    studentId: number;
-    studentNo: string;
-    expiry: Date | null;
-    updatedAt: Date;
-    createdAt: Date;
-    lastModified: string;
-    studentName:string;
-    createdAtString:string;
-    expiryDisplay:string;
-
-    constructor(data: any, session?: any, timezone?: string) {
-        this.id = data.id || data.teacherId || data.studentId;
-        this.studentId = data.studentId || data.student_id;
-        this.createdAt = data.createdAt || data.created_at || new Date();
-        this.updatedAt = data.updatedAt || data.updated_at || new Date();
-        this.studentNo = data.studentNo || data.student_number || null;
-        this.expiry = data.membership_expiry ? dayjs(data.membership_expiry).tz(timezone).toDate() : null;
-        if (data.membership_expiry || data.expiry) {
-            const expiryDay = dayjs(data.membership_expiry || data.expiry).startOf('day');
-            this.expiry = expiryDay.toDate();
-            this.expiryDisplay = expiryDay.format('DD/MM/YYYY');
-        } else {
-            this.expiry = null;
-            this.expiryDisplay = '-';
-        }
-        this.updatedAt = data.updated_at
-        this.createdAt = data.created_at
-        this.studentName = data.studentName
-        this.createdAtString = dayjs.utc(this.createdAt).tz(timezone).format('DD/MM/YYYY HH:mm')
-        this.lastModified = dayjs.utc(this.updatedAt).tz(timezone).format('DD/MM/YYYY HH:mm')
-    }
-
-    static async formatList<T extends typeof Membership>(this: T, data: any, schemaName: string, session?: any,): Promise<InstanceType<T>> {
-        const tz = await getSystemTimeZone(schemaName);
-        return new this(data, session, tz).toObject();
-    }
-
     toObject() {
         return JSON.parse(JSON.stringify(this));
     }

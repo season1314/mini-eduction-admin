@@ -6,11 +6,11 @@ export type FormState = {
     timestamp: number
 };
 
-
-
-export interface ReturnList{
+export interface ReturnList {
     code: number;
     data?: { list: any[], total: number, page: number };
     message?: string
 }
+
+
 

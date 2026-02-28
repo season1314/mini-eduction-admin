@@ -17,12 +17,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Textarea } from "@/components/ui/textarea"
 
 
-export default function StudentForm({ tenant, onSuccess }: { tenant: string, onSuccess: () => void }) {
-    const createStudentWithTenant = createStudent.bind(null, tenant);
-    const [state, formAction, isPending] = useActionState<FormState, FormData>(createStudentWithTenant, { code: -1, timestamp: 1 });
-    const [open, setOpen] = React.useState(false)
-    const [formDataState, setFormDataState] = useState({
-        studentNo: "",
+const rawData = {
+    studentNo: "",
         emContact: "",
         emPhone: "",
         email: "",
@@ -30,10 +26,17 @@ export default function StudentForm({ tenant, onSuccess }: { tenant: string, onS
         phone: "",
         contact: "",
         des: "",
-        gender: "UNKNOWN",
+        gender: "",
         birth: undefined as Date | undefined,
+}
 
-    });
+
+
+export default function StudentForm({ tenant, onSuccess }: { tenant: string, onSuccess: () => void }) {
+    const createStudentWithTenant = createStudent.bind(null, tenant);
+    const [state, formAction, isPending] = useActionState<FormState, FormData>(createStudentWithTenant, { code: -1, timestamp: 1 });
+    const [open, setOpen] = React.useState(false)
+    const [formDataState, setFormDataState] = useState(rawData);
     const [error, setError] = useState<Record<string, string | undefined>>({
         email: "",
         name: "",
@@ -43,7 +46,7 @@ export default function StudentForm({ tenant, onSuccess }: { tenant: string, onS
     useEffect(() => {
         if (state.code == 2 && state.error) { setError(state.error) }
         if (state.code == 1) { toast.error(state.message) }
-        if (state.code == 0) { toast.success(state.message); onSuccess(); }
+        if (state.code == 0) { toast.success(state.message); setFormDataState(rawData); onSuccess(); }
     }, [state]);
     return (
         <form action={formAction} className="grid gap-4 py-4">
@@ -52,7 +55,7 @@ export default function StudentForm({ tenant, onSuccess }: { tenant: string, onS
 
             <div className="grid gap-2">
                 <Label htmlFor="studentNo">Student No.<a className="text-[10px] text-destructive font-medium block h-[10px] leading-[10px]">{error.studentNo}</a></Label>
-                <Input id="studentNo" name="studentNo" placeholder="SID:0000000000" required
+                <Input id="studentNo" name="studentNo" placeholder="0000000000" required
                     value={formDataState.studentNo}
                     onChange={(e) => setFormDataState({ ...formDataState, studentNo: e.target.value })}
                     onFocus={() => setError({ ...error, studentNo: '' })}
@@ -124,12 +127,12 @@ export default function StudentForm({ tenant, onSuccess }: { tenant: string, onS
                         </PopoverContent>
                     </Popover>
                 </div>
-                
+
                 <div className="grid gap-2">
                     <Label htmlFor="gender">Gender</Label>
-                    <Select value={formDataState.gender} onValueChange={(newValue: string) => setFormDataState({ ...formDataState, gender: newValue })}>
-                        <SelectTrigger className="w-[120px]">
-                            <SelectValue />
+                    <Select name="_gender" value={formDataState.gender} onValueChange={(newValue: string) => setFormDataState({ ...formDataState, gender: newValue })}>
+                        <SelectTrigger className="w-full" name="__gender" >
+                            <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
@@ -161,24 +164,25 @@ export default function StudentForm({ tenant, onSuccess }: { tenant: string, onS
                 </div>
             </div>
 
-            <div className="grid gap-4">
+            <div className="grid gap-2">
                 <Label htmlFor="des">
                     Description
                 </Label>
                 <Textarea
                     id="des"
                     name="des"
-                    placeholder="Additional notes about the teacher (e.g., teaching style, specialties, or specific availability needs)."
+                    placeholder="Additional notes about the student (e.g., preferred learning style, areas of focus, or availability requirements)."
                     value={formDataState.des}
                     onChange={(e) => setFormDataState({ ...formDataState, des: e.target.value })}
                     className="h-[100px] resize-none"
                 />
             </div>
-
-            <div className="flex justify-end gap-3 mt-4">
-                <Button type="submit" disabled={isPending}>
-                    {isPending ? <Loader2 className="h-10 w-10 animate-spin text-primary text-white" /> : <Save />}
-                </Button>
+            <div className="flex justify-between gap-3 mt-4">
+                <div className="flex justify-start gap-3">
+                    <Button type="submit" disabled={isPending}>
+                        {isPending ? <Loader2 className="h-10 w-10 animate-spin text-primary text-white" /> : <Save />}
+                    </Button>
+                </div>
             </div>
         </form>
     )

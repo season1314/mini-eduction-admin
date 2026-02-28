@@ -17,7 +17,9 @@ export function AppSidebar({ tenant }: { tenant: string }) {
         { title: "Dashboard", url: `/${tenant}/dashboard`, icon: LayoutDashboard },
         { title: "Administrator", url: `/${tenant}/administrator`, icon: LayoutDashboard },
         { title: "Teacher", url: `/${tenant}/teacher`, icon: LayoutDashboard },
-        { title: "Student", url: `/${tenant}/student`, icon: LayoutDashboard }
+        { title: "Student", url: `/${tenant}/student`, icon: LayoutDashboard },
+        { title: "MemberRecord", url: `/${tenant}/membership/record`, icon: LayoutDashboard },
+        { title: "Class", url: `/${tenant}/group`, icon: LayoutDashboard }
     ]
 
     return (

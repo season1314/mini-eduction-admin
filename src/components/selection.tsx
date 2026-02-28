@@ -6,15 +6,14 @@ interface selectionType {
     onAction: (val: string) => void;
     items: { value: string, label: string }[]
     className: string
-    id: string
     value: string
 }
 
 
-export default function SelectionComponent({ defaultText, items, className, id, onAction, value }: selectionType) {
+export default function SelectionComponent({ defaultText, items, className, onAction, value }: selectionType) {
     return (
-        <Select name={id} onValueChange={(val) => onAction(val)} value={value || ""}>
-            <SelectTrigger className={className}>
+        <Select onValueChange={(val) => onAction(val)} value={value || ""} name={defaultText}>
+            <SelectTrigger className={className} name={defaultText} id={defaultText}>
                 <SelectValue placeholder={defaultText} />
             </SelectTrigger>
             <SelectContent>

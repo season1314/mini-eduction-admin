@@ -24,7 +24,6 @@ async function createRaw(schemaName: string, prevState: FormState, formData: For
     if (Number(isTeacherNoExisted[0].count) > 0) { return { code: 1, message: "This teacher number is already in use", timestamp: Date.now() } }
 
     try {
-
         await db.$queryRaw`
             INSERT INTO ${tenantTable} 
             ("teacher_number","email", "name", "birth_date","gender","phone_number","updated_at", "contact","des","created_id", "created_by","color") 
@@ -53,7 +52,7 @@ async function getRaw(schemaName: string, page: number = 1, limit: number = 20, 
         db.$queryRaw<any[]>`SELECT id, email, status, name, color,gender,contact, des, phone_number,birth_date, created_at,created_id,created_by,teacher_number FROM ${tableIdentifier} ${whereClause} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`,
         db.$queryRaw<[{ count: bigint }]>`SELECT COUNT(*) as count FROM ${tableIdentifier} ${whereClause} `
     ]);
-    const formatList = await Promise.all( list.map(item => Teacher.formatList(item, schemaName))
+    const formatList = await Promise.all(list.map(item => Teacher.formatList(item, schemaName))
     );
     const totalItems = Number(countRes[0]?.count ?? 0);
     const totalPages = Math.ceil(totalItems / limit) || 1;
@@ -80,6 +79,7 @@ async function editRaw(schemaName: string, prevState: FormState, formData: FormD
 
     try {
         const GenderType = `"template_schema"."Gender"`;
+        const StatusType = `"template_schema"."Status"`;
         const birthParam = teacher.birth ? teacher.birth : null;
         const genderParam = teacher.gender ? teacher.gender : 'UNKNOWN'
         const updates = [Prisma.sql`"name" = ${teacher.name}`, Prisma.sql`"updated_at" = ${teacher.updatedAt}`];
@@ -90,6 +90,7 @@ async function editRaw(schemaName: string, prevState: FormState, formData: FormD
         updates.push(Prisma.sql`"contact" = ${teacher.contact}`);
         updates.push(Prisma.sql`"des" = ${teacher.des}`);
         updates.push(Prisma.sql`"color" = ${teacher.color}`);
+        updates.push(Prisma.sql`"status" = ${teacher.status}::${Prisma.raw(StatusType)}`);
         await db.$executeRaw`UPDATE ${tenantTable} SET ${Prisma.join(updates, ', ')} WHERE "id" = ${teacher.id}::integer`;
         return { code: 0, timestamp: Date.now(), message: "Updata successful" };
     } catch (e) {
@@ -98,44 +99,21 @@ async function editRaw(schemaName: string, prevState: FormState, formData: FormD
     }
 }
 
-//Switch teacher status
-async function switchStatusRaw(schemaName: string, teacherId: string): Promise<FormState> {
-    if (!teacherId) { return { code: 1, message: 'Please provide a valid teacher id.', timestamp: Date.now() } }
-    if (!schemaName) { return { code: 1, message: 'Organization key cannot null', timestamp: Date.now() } }
-    const db = await tenantDb(schemaName);
-    const tenantTable = Prisma.raw(`"${schemaName}"."Teacher"`);
-    const teachers = await db.$queryRaw<any[]>` SELECT "id", "name", "email","status" FROM ${tenantTable} WHERE "id" = ${teacherId}  LIMIT 1`;
-    const teacher = teachers[0]
-    if (!teacher) { return { code: 1, message: "This teacher is not existed in database", timestamp: Date.now() } }
-    const enumType = Prisma.raw(`"template_schema"."Status"`);
-    let updates = []
-    if (teacher.status == 'ACTIVE') {
-        updates = [Prisma.sql`"status" = 'BANNED'::${enumType}`];
-    } else {
-        updates = [Prisma.sql`"status" = 'ACTIVE'::${enumType}`];
-    }
-    await db.$executeRaw`
-    UPDATE ${tenantTable}
-    SET ${Prisma.join(updates, ', ')}
-    WHERE "id" = ${teacherId}`;
-
-    return { code: 0, message: "Successful update teacher status", timestamp: Date.now() };
-}
-
 //Delete teacher
-async function deleteRaw(schemaName: string, teacherId: string): Promise<FormState> {
+async function deleteRaw(schemaName: string, prevState: FormState, formData: FormData): Promise<FormState> {
+    const { teacherId, confirmTeacherNo } = Object.fromEntries(formData as any);
     if (!teacherId) { return { code: 1, message: 'Please provide a valid teacher id.', timestamp: Date.now() } }
+    if (!confirmTeacherNo){ return { code: 1, message: 'Please enter teacher number confirm deletion.', timestamp: Date.now() }}
     if (!schemaName) { return { code: 1, message: 'Organization key cannot null', timestamp: Date.now() } }
     const db = await tenantDb(schemaName);
     const tenantTable = Prisma.raw(`"${schemaName}"."Teacher"`);
-    const teachers = await db.$queryRaw<any[]>` SELECT "id", "name", "email","status" FROM ${tenantTable} WHERE "id" = ${teacherId}::integer  LIMIT 1`;
+    const teachers = await db.$queryRaw<any[]>` SELECT "id", "name", "email","status","teacher_number" as "teacherNo" FROM ${tenantTable} WHERE "id" = ${teacherId}::integer  LIMIT 1`;
     const teacher = teachers[0]
     if (!teacher) { return { code: 1, message: "This teacher is not existed in database", timestamp: Date.now() } }
-
+    if (teacher.teacherNo !== confirmTeacherNo){ return { code: 1, message: "Please enter teacher number confirm deletion", timestamp: Date.now() } }
     try {
-        await db.$executeRaw` DELETE FROM ${tenantTable} WHERE "id" = ${teacherId}`
+        await db.$executeRaw` DELETE FROM ${tenantTable} WHERE "id" = ${teacherId}::integer`
         return { code: 0, message: "Successful delete teacher", timestamp: Date.now() };
-
     } catch (error: any) {
         console.log(error)
         const err = error as Error;
@@ -154,7 +132,5 @@ export const getTeachers = combineMiddlewares(withTenantAuth)(getRaw);
 export const createTeacher = combineMiddlewares(withTenantAuth)(createRaw);
 
 export const editTeacher = combineMiddlewares(withTenantAuth)(editRaw)
-
-export const switchStatus = combineMiddlewares(withTenantAuth)(switchStatusRaw)
 
 export const deleteTeacher = combineMiddlewares(withTenantAuth)(deleteRaw)

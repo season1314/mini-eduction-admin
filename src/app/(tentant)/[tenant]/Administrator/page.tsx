@@ -37,7 +37,7 @@ export default function AdminListPage({ params }: { params: Promise<{ tenant: st
     const [adminData, setAdminData] = useState<AdminDate | null>(null);
     const [openDelete, setOpenDelete] = useState(false)
 
-    const handleSearch = (type: string, _keyword: string) => {
+    const handleSearch = (_keyword: string) => {
         if (tenant) {
             execute(tenant, 1, 20, _keyword);
             setKeyword(_keyword)

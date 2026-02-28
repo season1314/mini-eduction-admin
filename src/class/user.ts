@@ -59,7 +59,7 @@ export class BaseUser {
     }
 
     validateId(modeName: string) {
-        if (!this.createdId || !this.createdBy) {
+        if (!this.id) {
             return { hasError: true, message: `Please provide a valid ${modeName} id.` }
         }
         return { hasError: false }
